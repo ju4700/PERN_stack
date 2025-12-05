@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ju4700
+      POSTGRES_PASSWORD: dockpern47
+      POSTGRES_DB: perndata
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  pg_admin:
+      image: dpage/pgadmin4:latest
+      environment:
+        PGADMIN_DEFAULT_EMAIL: jalal.dev.design@gmail.com
+        PGADMIN_DEFAULT_PASSWORD: pgadmin47
+      ports:
+        - "8080:80"
+      depends_on:
+        - db
+
+volumes:
+  db_data:
