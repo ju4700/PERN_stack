@@ -1,23 +1,25 @@
 const express = require('express');
-// const {Pool} = require('pg');
+const {Pool} = require('pg');
 
 const app = express();
 const port = 3000;
 
-// const pool = new Pool({
-//     user: 'ju4700',
-//     host: 'localhost',
-//     database: 'perndatabse',
-//     password: '4700',
-//     port: 5432,
-// });
-
-app.get('/', (req, res) => {
-    res.send('Hello, World!');
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'perndatabase',
+    password: '4700',
+    port: 5432,
 });
 
-app.post('/categories/:id', (req, res) => {
-    res.send('Category created' + req.params.id);
+app.get('/users', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM "users"');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error fetching users');
+    }
 });
 
 app.listen(port, () => {
