@@ -1,11 +1,10 @@
 const express = require('express');
 const {Pool} = require('pg');
+const {z} = require('zod');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const port = 3000;
-
-app.use(express.static(__dirname));
-
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -14,15 +13,43 @@ const pool = new Pool({
     port: 5432,
 });
 
-app.get('/users', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM "users"');
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error fetching users');
+app.use(express.static(__dirname));
+app.use(express.json());
+
+app.post('/auth/sign-up', async (req, res) => {
+    
+    const userSchema = z.object({
+        firstName: z.string().min(3),
+        lastName: z.string().min(3),
+        email: z.email(),
+        password: z.string().min(8),
+    });
+    
+    const {success, data, error} = userSchema.safeParse(req.body);
+    if (!success) {
+        return res.status(400).json({message: 'Invalid request data', errors: error.flatten()});
     }
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: hashedPassword,
+    };
+
+    res.json({user:user});
 });
+
+// app.get('/users', async (req, res) => {
+//     try {
+//         const result = await pool.query('SELECT * FROM "users"');
+//         res.json(result.rows);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).send('Error fetching users');
+//     }
+// });
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

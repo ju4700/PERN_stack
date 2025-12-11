@@ -12,9 +12,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "express": "^5.2.1",
     "pg": "^8.16.3",
-    "prisma": "^7.1.0"
+    "prisma": "^7.1.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
