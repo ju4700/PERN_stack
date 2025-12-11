@@ -4,6 +4,8 @@ const {Pool} = require('pg');
 const app = express();
 const port = 3000;
 
+app.use(express.static(__dirname));
+
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
