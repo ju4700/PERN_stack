@@ -24,8 +24,8 @@ app.post('/auth/sign-up', async (req, res) => {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const user = {
-        firstName: data.firstName,
-        lastName: data.lastName,
+        first_name: data.firstName,
+        last_name: data.lastName,
         email: data.email,
         password: hashedPassword,
     };
