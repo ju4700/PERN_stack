@@ -1,6 +1,7 @@
-const express = require('express');
-const {z} = require('zod');
-const bcrypt = require('bcrypt');
+import express from 'express';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import { prisma } from './prisma.js';
 
 const app = express();
 const port = 3000;
@@ -27,8 +28,18 @@ app.post('/auth/sign-up', async (req, res) => {
         first_name: data.firstName,
         last_name: data.lastName,
         email: data.email,
-        password: hashedPassword,
+        password_hash: hashedPassword,
     };
+
+    const createUser = await prisma.users.create({
+        data: user,
+    });
+
+    if (!createUser) {
+        return  res.status(500).json({message: 'Error creating user'});
+    }else{
+        res.json({message: 'User created successfully', user: createUser});
+    }
 
     res.json({user:user});
 });
