@@ -1,17 +1,9 @@
 const express = require('express');
-const {Pool} = require('pg');
 const {z} = require('zod');
 const bcrypt = require('bcrypt');
 
 const app = express();
 const port = 3000;
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'perndatabase',
-    password: '4700',
-    port: 5432,
-});
 
 app.use(express.static(__dirname));
 app.use(express.json());
