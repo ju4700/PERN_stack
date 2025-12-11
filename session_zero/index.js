@@ -44,6 +44,11 @@ app.post('/auth/sign-up', async (req, res) => {
     res.json({user:user});
 });
 
+app.get('/users', async (req, res) => {
+    const users = await prisma.users.findMany();
+    res.json(users);
+});
+
 // app.get('/users', async (req, res) => {
 //     try {
 //         const result = await pool.query('SELECT * FROM "users"');
