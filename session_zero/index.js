@@ -88,6 +88,59 @@ app.get('/users/:id', async (req, res) => {
     res.json(user);
 });
 
+app.patch('/users/:id', async (req, res) => {
+    const userId = req.params.id;
+    const userUpdateSchema = z.object({
+        id: z.uuid(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+    });
+    const { success, data, error } = userUpdateSchema.safeParse({
+        id: userId,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+    });
+    if (!success) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.flatten() });
+    }
+
+    const user = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+    }
+    const updatedUser = await prisma.users.update({
+        where: {
+            id: userId,
+        },
+        data: user,
+        omit: {
+            password_hash: true,
+        }
+    });
+
+    res.json({ message: 'User updated successfully', user: updatedUser });
+});
+
+app.delete('/users/:id', async (req, res) => {
+    const userId = req.params.id;
+    const userDeleteSchema = z.object({
+        id: z.uuid(),
+    });
+    const { success, data, error } = userDeleteSchema.safeParse({
+        id: userId,
+    });
+    if (!success) {
+        return res.status(400).json({ message: 'Invalid request data', data: z.flattenErrors(error) });
+    }
+    const deleteUser = await prisma.users.delete({
+        where: {
+            id: userId,
+        }, omit: { password_hash: true, }
+    });
+    res.json({ message: 'User deleted successfully', user: deleteUser });
+});
+
+
 // app.get('/users', async (req, res) => {
 //     try {
 //         const result = await pool.query('SELECT * FROM "users"');
