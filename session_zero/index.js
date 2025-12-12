@@ -2,23 +2,24 @@ import express from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { prisma } from './prisma.js';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 const port = 3000;
 
-app.use(express.static(__dirname));
+app.use(express.static("frontend"));
 app.use(express.json());
 
-app.post('/auth/login', async (req, res) => {
+app.post('/auth/sign-in', async (req, res) => {
     const loginschema = z.object({
-        email: z.email(),
+        email: z.string().email(),
         password: z.string().min(8),
     });
     const {success, data, error} = loginschema.safeParse(req.body);
     if (!success) {
         return res.status(400).json({message: 'Invalid request data', errors: error.flatten()});
     }
-
+    
     const user = await prisma.users.findUnique({
         where: {
             email: data.email,
@@ -28,7 +29,10 @@ app.post('/auth/login', async (req, res) => {
         return res.status(404).json({message: 'User not found'});
     } else {
         if (await bcrypt.compare(data.password, user.password_hash)){
-            res.json({message: 'Login successful', user: user});
+            const secretKey = process.env.JWT_SECRET
+            const token = jwt.sign({userId: user.id, email: user.email}, secretKey, {expiresIn: '1h'});
+            res.json({message: 'Sign-in successful', data: {token}});
+
         } else{
             res.status(401).json({message: 'Invalid password'});
         }
@@ -132,12 +136,25 @@ app.delete('/users/:id', async (req, res) => {
     if (!success) {
         return res.status(400).json({ message: 'Invalid request data', data: z.flattenErrors(error) });
     }
-    const deleteUser = await prisma.users.delete({
+
+    const user = await prisma.users.findUnique({
         where: {
             id: userId,
-        }, omit: { password_hash: true, }
+        },
     });
-    res.json({ message: 'User deleted successfully', user: deleteUser });
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    } else {
+        const deleteUser = await prisma.users.delete({
+            where: {
+                id: userId,
+            }, omit: { password_hash: true, }
+        });
+        res.json({ message: 'User deleted successfully', user: deleteUser });
+    }
+
+    
 });
 
 
