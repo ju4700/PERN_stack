@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model cart_items {
+  id          String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  cart_id     String       @db.Uuid
+  product_id  String       @db.Uuid
+  variant_id  String?      @db.Uuid
+  quantity    Int          @default(1)
+  added_at    DateTime     @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  carts       carts        @relation(fields: [cart_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product     product      @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product_var product_var? @relation(fields: [variant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model carts {
+  id         String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String?      @db.Uuid
+  session_id String?      @db.VarChar(255)
+  created_at DateTime     @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  updated_at DateTime     @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  cart_items cart_items[]
+  users      users?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model categories {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String       @db.VarChar(255)
+  slug             String       @unique @db.VarChar(255)
+  parent_id        String?      @db.Uuid
+  descriptiom      String?
+  image            String       @db.VarChar(255)
+  categories       categories?  @relation("categoriesTocategories", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_categories categories[] @relation("categoriesTocategories")
+  product          product[]
+}
+
+model order_items {
+  id                String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  order_id          String  @db.Uuid
+  product_id        String  @db.Uuid
+  product_snap      Json
+  variant_snap      Json
+  quantity          Int
+  price_at_purchase Decimal @db.Decimal(10, 2)
+  total_price       Decimal @db.Decimal(10, 2)
+  orders            orders  @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product           product @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model orders {
+  id                    String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id               String        @db.Uuid
+  status                String        @db.VarChar(50)
+  total_amout           Decimal       @db.Decimal(10, 2)
+  shipping_add_snapshot Json
+  payment_method        String        @db.VarChar(50)
+  payment_status        String        @default("pending") @db.VarChar(50)
+  created_at            DateTime      @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  updated_at            DateTime      @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  order_items           order_items[]
+  users                 users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model product {
+  id               String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  category         String        @db.Uuid
+  name             String?       @db.VarChar(255)
+  price            Decimal?      @db.Decimal(10, 2)
+  discounted_price Decimal       @db.Decimal(10, 2)
+  slug             String        @unique @db.VarChar(255)
+  descriptiom      String?
+  stock_qn         Int           @default(0)
+  specification    Json?
+  is_featured      Boolean?      @default(false)
+  is_active        Boolean?      @default(true)
+  created_at       DateTime      @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  updated_at       DateTime      @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  cart_items       cart_items[]
+  order_items      order_items[]
+  categories       categories    @relation(fields: [category], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product_img      product_img[]
+  product_var      product_var[]
+  review           review[]
+}
+
+model product_img {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id    String?  @db.Uuid
+  img           String   @db.VarChar(255)
+  alt           String?  @db.VarChar(255)
+  display_order Int?     @default(0)
+  is_primary    Boolean? @default(false)
+  product       product? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model product_var {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id       String?      @db.Uuid
+  variant_name     String       @db.VarChar(50)
+  variant_val      String       @db.VarChar(50)
+  price_adjustment Decimal?     @default(0) @db.Decimal(10, 2)
+  stock_quantity   Int?         @default(0)
+  img_url          String?      @db.VarChar(255)
+  cart_items       cart_items[]
+  product          product?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model review {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title       String?  @db.VarChar(128)
+  product_id  String   @db.Uuid
+  user_id     String   @db.Uuid
+  rating      Int
+  comment     String?
+  is_verified Boolean? @default(false)
+  created_at  DateTime @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  updated_at  DateTime @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  product     product  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user_add {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id       String   @db.Uuid
+  full_name     String   @db.VarChar(200)
+  address_line1 String   @db.VarChar(255)
+  address_line2 String?  @db.VarChar(255)
+  city          String   @db.VarChar(100)
+  state         String   @db.VarChar(100)
+  postalcode    String   @db.VarChar(100)
+  country       String   @db.VarChar(100)
+  phone_number  String   @db.VarChar(50)
+  is_default    Boolean? @default(false)
+  created_at    DateTime @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  updated_at    DateTime @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  users         users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String     @unique @db.VarChar(255)
+  first_name    String     @db.VarChar(100)
+  last_name     String     @db.VarChar(100)
+  password_hash String     @db.VarChar(255)
+  created_at    DateTime   @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  updated_at    DateTime   @default(dbgenerated("'2025-12-09 22:07:46.123526'::timestamp without time zone")) @db.Timestamp(6)
+  carts         carts[]
+  orders        orders[]
+  review        review[]
+  user_add      user_add[]
+}
