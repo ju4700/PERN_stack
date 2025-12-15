@@ -19,7 +19,7 @@ app.post('/auth/sign-in', async (req, res) => {
     if (!success) {
         return res.status(400).json({message: 'Invalid request data', errors: error.flatten()});
     }
-    
+
     const user = await prisma.users.findUnique({
         where: {
             email: data.email,
@@ -72,6 +72,29 @@ app.post('/auth/sign-up', async (req, res) => {
     }
 
     res.json({user:user});
+});
+
+app.get('/auth/me', async (req, res) => {
+    const authHeader = req.headers.authorization.split(' ')[1];
+    if (!authHeader) {
+        return res.status(401).json({message: 'Authorization header missing'});
+    }
+    const token = authHeader;
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+        if (err) {
+            return res.status(401).json({message: 'Unauthorized'});
+        }
+        const user = await prisma.users.findUnique({
+            where: {
+                id: decoded.userId,
+            }, 
+            omit: { password_hash: true, }
+        });
+        if (!user) {
+            return res.status(404).json({message: 'User not found'});
+        }
+        res.json({user});
+    });
 });
 
 app.get('/users', async (req, res) => {
