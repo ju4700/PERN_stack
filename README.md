@@ -45,10 +45,6 @@ Why this matters:
 
 ## Section 1 — Project init
 
----
-
-## Section 1 — Project init
-
 #### PS D:\Development\PERN_stack\todo_session> `npm init -y`
 
 #### PS D:\Development\PERN_stack\todo_session> `npm install express prisma @prisma/client @prisma/adapter-pg pg dotenv bcrypt jsonwebtoken zod typescript`
