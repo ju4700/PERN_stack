@@ -14,8 +14,8 @@ This walkthrough is written for beginners and includes all required code + expla
 ## Prerequisites
 
 - Node.js installed
-- PostgreSQL installed and running
-- A PostgreSQL database created (example: `tododb`)
+- A Prisma Postgres (Prisma Cloud) connection string (you’ll copy it during `npx prisma init` output, or from Prisma Console)
+- Optional: `psql` installed (only needed if you want to run SQL manually, like enabling extensions)
 
 ## Important Prisma setup (follow exactly)
 
@@ -40,6 +40,10 @@ Why this matters:
 - **JWT (JSON Web Token)**: a signed token string used to prove a user is logged in.
 - **Middleware**: a function that runs before your route handler (example: check a JWT token).
 - **Controller**: the function that contains the business logic (example: create a todo in the DB).
+
+---
+
+## Section 1 — Project init
 
 ---
 
@@ -111,10 +115,26 @@ This creates:
 
 ### 2.1 Set your `.env`
 
+### 2.1.1 Create a Prisma Postgres database (Prisma Cloud)
+
+This walkthrough assumes you are using a hosted Prisma Postgres database (not pgAdmin/local Postgres).
+
+When you run `npx prisma init`, Prisma CLI may print guidance for Prisma Postgres (cloud) and show you a connection string to use.
+
+What to do:
+
+1. In the terminal output of `npx prisma init`, look for a Prisma Postgres connection string (or a line telling you what to put into `DATABASE_URL`).
+2. Copy that connection string from the terminal.
+3. Paste it into your `.env` as `DATABASE_URL`.
+
+If your `prisma init` output does not include a Prisma Postgres connection string:
+
+- Create a Prisma Postgres database in Prisma Console and copy the connection string from there.
+
 Edit `.env`:
 
 ```dotenv
-DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/tododb?schema=public"
+DATABASE_URL="<paste your Prisma Postgres connection string here>"
 JWT_SECRET="<generate one>"
 ```
 
@@ -164,6 +184,12 @@ Important (Postgres UUIDs)
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
+
+If you are using a hosted Prisma Postgres database and you cannot enable extensions (permission restriction), use Prisma-side UUID defaults instead:
+
+- Replace `@default(dbgenerated("uuid_generate_v4()"))` with `@default(uuid())`
+
+This avoids needing `uuid-ossp`.
 
 ```prisma
 generator client {
@@ -950,6 +976,11 @@ Frontend concepts (what this code is doing)
 
 Make sure your DB is reachable from `DATABASE_URL`.
 
+Because you’re using Prisma Postgres (cloud), this mainly means:
+
+- your `DATABASE_URL` is copied correctly from Prisma Console
+- you have internet access (and any IP allowlist/firewall rules permit your connection)
+
 Then:
 
 #### PS D:\Development\PERN_stack\todo_session> `npx prisma db push`
@@ -980,7 +1011,4 @@ Open:
 ## Notes
 
 - This setup imports Prisma Client from `dist/generated/prisma/client.js`, so always run `npx tsc` after `npx prisma db push`.
-- If you get UUID errors, enable Postgres extension `uuid-ossp`.
-
-
---ju470
+- If you get UUID errors, enable Postgres extension `uuid-ossp`, or switch IDs to `@default(uuid())` (see Section 3).
