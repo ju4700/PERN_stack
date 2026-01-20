@@ -942,6 +942,9 @@ Frontend concepts (what this code is doing)
   We wrap it in `api()` so every request automatically:
   - sends JSON headers (`Content-Type: application/json`)
   - sends the JWT token as `Authorization: Bearer <token>`
+- `try { ... } catch (e) { ... }`: handles errors without crashing your UI.
+  In our button handlers we `await` API requests; if the server returns an error (like `401 Unauthorized`) or the network fails, `api()` throws.
+  The `catch` block receives the error object (`e`) so we can show it on the page using `out(e)` instead of the script stopping.
 - `JSON.stringify(...)`: converts a JS object into JSON text for the request body.
 - `res.json()`: converts the response JSON text back into a JS object.
 
@@ -982,4 +985,6 @@ Open:
 
 - This setup imports Prisma Client from `dist/generated/prisma/client.js`, so always run `npx tsc` after `npx prisma db push`.
 - If you get UUID errors, enable Postgres extension `uuid-ossp`.
-- This is a minimal example; in production, consider better error handling, logging, and security practices - ju4700
+
+
+--ju470
