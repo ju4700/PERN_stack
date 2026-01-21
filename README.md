@@ -1033,6 +1033,11 @@ Open:
 
 ## Section 12 — API quick reference
 
+Important: sending JSON
+
+- When testing `POST`/`PATCH` requests, set header `Content-Type: application/json`.
+- In Postman/Thunder Client, choose Body → JSON (or raw → JSON). If you don’t, Express won’t parse the body and `req.body` will be `undefined`.
+
 ### Auth
 - `POST /auth/sign-up` body: `{ firstName, lastName, email, password }`
 - `POST /auth/sign-in` body: `{ email, password }` → returns `{ token }`
