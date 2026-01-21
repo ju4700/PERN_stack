@@ -96,6 +96,29 @@ generated/
 .env
 ```
 
+### 1.1 Initialize TypeScript (required for this Prisma setup)
+
+We use TypeScript here only to compile the generated Prisma Client into `dist/`.
+
+#### PS D:\Development\PERN_stack\todo_session> `npx tsc --init`
+
+Then edit `tsconfig.json` to keep it simple and aligned with this setup:
+
+```jsonc
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "nodenext",
+    "target": "esnext",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+```
+
 ---
 
 ## Section 2 — Prisma init + config
@@ -340,7 +363,11 @@ export const authMiddleware = (req, res, next) => {
     return res.status(401).json({ message: "Authorization header missing" });
   }
 
-  const token = authHeader.split(" ")[1];
+  const parts = authHeader.split(" ");
+  const token = parts.length === 2 ? parts[1] : "";
+  if (!token) {
+    return res.status(401).json({ message: "Invalid Authorization header format" });
+  }
   jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -350,7 +377,14 @@ export const authMiddleware = (req, res, next) => {
 
     const user = await prisma.users.findUnique({
       where: { id: userId },
-      omit: { password_hash: true },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        created_at: true,
+        updated_at: true,
+      },
     });
 
     if (!user) {
@@ -516,7 +550,14 @@ export const userSignup = async (req, res) => {
 
   const created = await prisma.users.create({
     data: { first_name: firstName, last_name: lastName, email, password_hash },
-    omit: { password_hash: true },
+    select: {
+      id: true,
+      email: true,
+      first_name: true,
+      last_name: true,
+      created_at: true,
+      updated_at: true,
+    },
   });
 
   res.json({ message: "User created successfully", user: created });
