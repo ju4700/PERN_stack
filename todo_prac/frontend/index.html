@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Todo App</title>
+  </head>
+  <body>
+    <h1>Todo App</h1>
+
+    <h2>Auth</h2>
+    <div>
+      <h3>Sign up</h3>
+      <input id="suFirst" placeholder="first name" />
+      <input id="suLast" placeholder="last name" />
+      <input id="suEmail" placeholder="email" />
+      <input id="suPass" placeholder="password (min 8)" type="password" />
+      <button id="btnSignup">Sign up</button>
+    </div>
+
+    <div>
+      <h3>Sign in</h3>
+      <input id="siEmail" placeholder="email" />
+      <input id="siPass" placeholder="password" type="password" />
+      <button id="btnSignin">Sign in</button>
+      <button id="btnMe">Me</button>
+    </div>
+
+    <p><b>Token:</b> <span id="token"></span></p>
+
+    <hr />
+
+    <h2>Todos</h2>
+    <div>
+      <input id="todoTitle" placeholder="title" />
+      <input id="todoDesc" placeholder="description (optional)" />
+      <button id="btnAdd">Add</button>
+      <button id="btnRefresh">Refresh</button>
+    </div>
+
+    <ul id="list"></ul>
+
+    <pre id="out"></pre>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
