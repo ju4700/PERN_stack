@@ -251,6 +251,11 @@ model todos {
 
 Because we set `output = "../generated/prisma"`, Prisma generates a client into `generated/prisma/`.
 
+Do we need `npx prisma generate`?
+
+- Usually **no**: `npx prisma db push` automatically runs Prisma Client generation (unless you pass `--skip-generate`).
+- You would run `npx prisma generate` manually if you changed `schema.prisma` and only want to regenerate the client (without pushing schema changes to the DB).
+
 ### 3.2 Compile the generated client to `dist/`
 
 Why do we compile?
@@ -259,24 +264,7 @@ Why do we compile?
 - Our runtime import will come from `dist/generated/prisma/client.js`.
 - So we compile once using TypeScript.
 
-#### PS D:\Development\PERN_stack\todo_session> `npx tsc --init`
-
-Edit `tsconfig.json` to keep it simple and aligned with your setup:
-
-```jsonc
-{
-  "compilerOptions": {
-    "outDir": "./dist",
-    "module": "nodenext",
-    "target": "esnext",
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "strict": true,
-    "skipLibCheck": true
-  }
-}
-```
+If you haven’t initialized TypeScript yet, do Section **1.1 Initialize TypeScript** first.
 
 Now compile:
 
