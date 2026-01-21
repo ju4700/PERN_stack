@@ -1,47 +1,91 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Todo App</title>
+
+    <!-- DaisyUI (required) -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+
+    <!-- Tailwind utilities in the browser (no build step) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Optional: your own small overrides -->
+    <!-- <link rel="stylesheet" href="./style.css" /> -->
+
+    <!-- Optional: Tailwind config overrides for the browser runtime -->
+    <!--
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {},
+        },
+      };
+    </script>
+    -->
   </head>
-  <body>
-    <h1>Todo App</h1>
+  <body class="min-h-screen bg-base-200">
+    <div class="mx-auto max-w-5xl p-4">
+      <div class="navbar bg-base-100 rounded-box shadow">
+        <div class="flex-1">
+          <span class="text-xl font-bold">Todo App</span>
+        </div>
+        <div class="flex-none">
+          <span class="text-xs opacity-70 mr-2">Token</span>
+          <span id="token" class="badge badge-neutral"></span>
+        </div>
+      </div>
 
-    <h2>Auth</h2>
-    <div>
-      <h3>Sign up</h3>
-      <input id="suFirst" placeholder="first name" />
-      <input id="suLast" placeholder="last name" />
-      <input id="suEmail" placeholder="email" />
-      <input id="suPass" placeholder="password (min 8)" type="password" />
-      <button id="btnSignup">Sign up</button>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h2 class="card-title">Sign up</h2>
+            <div class="grid grid-cols-1 gap-2">
+              <input id="suFirst" class="input input-bordered" placeholder="first name" />
+              <input id="suLast" class="input input-bordered" placeholder="last name" />
+              <input id="suEmail" class="input input-bordered" placeholder="email" />
+              <input id="suPass" class="input input-bordered" placeholder="password (min 8)" type="password" />
+              <button id="btnSignup" class="btn btn-primary">Create account</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h2 class="card-title">Sign in</h2>
+            <div class="grid grid-cols-1 gap-2">
+              <input id="siEmail" class="input input-bordered" placeholder="email" />
+              <input id="siPass" class="input input-bordered" placeholder="password" type="password" />
+              <div class="flex gap-2">
+                <button id="btnSignin" class="btn btn-success">Sign in</button>
+                <button id="btnMe" class="btn">Me</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+          <h2 class="card-title">Todos</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <input id="todoTitle" class="input input-bordered md:col-span-1" placeholder="title" />
+            <input id="todoDesc" class="input input-bordered md:col-span-1" placeholder="description (optional)" />
+            <div class="flex gap-2 md:col-span-1">
+              <button id="btnAdd" class="btn btn-primary flex-1">Add</button>
+              <button id="btnRefresh" class="btn flex-1">Refresh</button>
+            </div>
+          </div>
+
+          <ul id="list" class="menu bg-base-200 rounded-box mt-3"></ul>
+
+          <pre id="out" class="mt-3 p-3 bg-base-200 rounded-box overflow-auto text-xs"></pre>
+        </div>
+      </div>
+
+      <script src="./app.js"></script>
     </div>
-
-    <div>
-      <h3>Sign in</h3>
-      <input id="siEmail" placeholder="email" />
-      <input id="siPass" placeholder="password" type="password" />
-      <button id="btnSignin">Sign in</button>
-      <button id="btnMe">Me</button>
-    </div>
-
-    <p><b>Token:</b> <span id="token"></span></p>
-
-    <hr />
-
-    <h2>Todos</h2>
-    <div>
-      <input id="todoTitle" placeholder="title" />
-      <input id="todoDesc" placeholder="description (optional)" />
-      <button id="btnAdd">Add</button>
-      <button id="btnRefresh">Refresh</button>
-    </div>
-
-    <ul id="list"></ul>
-
-    <pre id="out"></pre>
-
-    <script src="./app.js"></script>
   </body>
 </html>
