@@ -6,8 +6,12 @@ You will build a Todo app where users can:
 - Sign in
 - Add todos
 - Edit todos
-- Mark todos completed
 - Delete todos
+
+Notes:
+
+- The backend API supports updating todos (including `completed`) via `PATCH /todos/:id`.
+- The included beginner-friendly frontend focuses on the basics: auth + add/list/delete.
 
 This walkthrough is written for beginners and includes all required code + explanations.
 
@@ -861,58 +865,68 @@ Create `frontend/index.html`:
         <div class="flex-1">
           <span class="text-xl font-bold">Todo App</span>
         </div>
-        <div class="flex-none">
+        <div class="flex-none items-center gap-2">
           <span class="text-xs opacity-70 mr-2">Token</span>
           <span id="token" class="badge badge-neutral"></span>
+          <button id="btnLogout" class="btn btn-sm hidden">Logout</button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h2 class="card-title">Sign up</h2>
-            <div class="grid grid-cols-1 gap-2">
-              <input id="suFirst" class="input input-bordered" placeholder="first name" />
-              <input id="suLast" class="input input-bordered" placeholder="last name" />
-              <input id="suEmail" class="input input-bordered" placeholder="email" />
-              <input id="suPass" class="input input-bordered" placeholder="password (min 8)" type="password" />
-              <button id="btnSignup" class="btn btn-primary">Create account</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h2 class="card-title">Sign in</h2>
-            <div class="grid grid-cols-1 gap-2">
-              <input id="siEmail" class="input input-bordered" placeholder="email" />
-              <input id="siPass" class="input input-bordered" placeholder="password" type="password" />
-              <div class="flex gap-2">
-                <button id="btnSignin" class="btn btn-success">Sign in</button>
-                <button id="btnMe" class="btn">Me</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-base-100 shadow mt-4">
+      <!-- Screen 1: Sign in (default) -->
+      <div id="viewSignin" class="card bg-base-100 shadow mt-4">
         <div class="card-body">
-          <h2 class="card-title">Todos</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <h2 class="card-title">Sign in</h2>
+          <div class="grid grid-cols-1 gap-2 max-w-md">
+            <input id="siEmail" class="input input-bordered" placeholder="email" />
+            <input id="siPass" class="input input-bordered" placeholder="password" type="password" />
+            <div class="flex gap-2">
+              <button id="btnSignin" class="btn btn-success">Sign in</button>
+            </div>
+            <div class="text-sm opacity-80">
+              Don’t have an account?
+              <button id="btnGoSignup" class="link link-primary">Sign up</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 2: Sign up -->
+      <div id="viewSignup" class="card bg-base-100 shadow mt-4 hidden">
+        <div class="card-body">
+          <h2 class="card-title">Sign up</h2>
+          <div class="grid grid-cols-1 gap-2 max-w-md">
+            <input id="suFirst" class="input input-bordered" placeholder="first name" />
+            <input id="suLast" class="input input-bordered" placeholder="last name" />
+            <input id="suEmail" class="input input-bordered" placeholder="email" />
+            <input id="suPass" class="input input-bordered" placeholder="password (min 8)" type="password" />
+            <button id="btnSignup" class="btn btn-primary">Create account</button>
+            <div class="text-sm opacity-80">
+              Already have an account?
+              <button id="btnGoSignin" class="link link-primary">Sign in</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 3: Todos (only after auth) -->
+      <div id="viewApp" class="card bg-base-100 shadow mt-4 hidden">
+        <div class="card-body">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="card-title">Todos</h2>
+            <button id="btnRefresh" class="btn btn-sm">Refresh</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
             <input id="todoTitle" class="input input-bordered md:col-span-1" placeholder="title" />
             <input id="todoDesc" class="input input-bordered md:col-span-1" placeholder="description (optional)" />
-            <div class="flex gap-2 md:col-span-1">
-              <button id="btnAdd" class="btn btn-primary flex-1">Add</button>
-              <button id="btnRefresh" class="btn flex-1">Refresh</button>
-            </div>
+            <button id="btnAdd" class="btn btn-primary md:col-span-1">Add</button>
           </div>
 
           <ul id="list" class="menu bg-base-200 rounded-box mt-3"></ul>
-
-          <pre id="out" class="mt-3 p-3 bg-base-200 rounded-box overflow-auto text-xs"></pre>
         </div>
       </div>
+
+      <pre id="out" class="mt-4 p-3 bg-base-100 rounded-box shadow overflow-auto text-xs"></pre>
 
       <script src="./app.js"></script>
     </div>
@@ -927,512 +941,223 @@ Create `frontend/app.js`:
 ```js
 let token = localStorage.getItem("token") || "";
 
-function out(x) {
-  const outEl = document.getElementById("out");
-  outEl.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2);
+const viewSignin = document.getElementById("viewSignin");
+const viewSignup = document.getElementById("viewSignup");
+const viewApp = document.getElementById("viewApp");
+
+const tokenBadge = document.getElementById("token");
+const btnLogout = document.getElementById("btnLogout");
+
+const btnGoSignup = document.getElementById("btnGoSignup");
+const btnGoSignin = document.getElementById("btnGoSignin");
+
+const siEmail = document.getElementById("siEmail");
+const siPass = document.getElementById("siPass");
+const btnSignin = document.getElementById("btnSignin");
+
+const suFirst = document.getElementById("suFirst");
+const suLast = document.getElementById("suLast");
+const suEmail = document.getElementById("suEmail");
+const suPass = document.getElementById("suPass");
+const btnSignup = document.getElementById("btnSignup");
+
+const todoTitle = document.getElementById("todoTitle");
+const todoDesc = document.getElementById("todoDesc");
+const btnAdd = document.getElementById("btnAdd");
+const btnRefresh = document.getElementById("btnRefresh");
+const list = document.getElementById("list");
+
+const outBox = document.getElementById("out");
+
+function showSignin() {
+  viewSignin.classList.remove("hidden");
+  viewSignup.classList.add("hidden");
+  viewApp.classList.add("hidden");
 }
 
-function setToken(t) {
-  token = t;
-  localStorage.setItem("token", t);
-  document.getElementById("token").textContent = t ? t.slice(0, 12) + "..." : "";
+function showSignup() {
+  viewSignin.classList.add("hidden");
+  viewSignup.classList.remove("hidden");
+  viewApp.classList.add("hidden");
 }
 
-setToken(token);
+function showApp() {
+  viewSignin.classList.add("hidden");
+  viewSignup.classList.add("hidden");
+  viewApp.classList.remove("hidden");
+}
 
-async function api(path, options = {}) {
-  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
-  if (token) headers.Authorization = `Bearer ${token}`;
+function setToken(newToken) {
+  token = newToken || "";
+  localStorage.setItem("token", token);
+  tokenBadge.textContent = token ? token.slice(0, 10) + "..." : "";
+  btnLogout.classList.toggle("hidden", !token);
+}
 
-  const res = await fetch(path, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw data;
+async function api(path, options) {
+  const requestOptions = options || {};
+  const headers = { "Content-Type": "application/json" };
+
+  if (token) {
+    headers.Authorization = "Bearer " + token;
+  }
+
+  const response = await fetch(path, { ...requestOptions, headers });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw data;
+  }
+
   return data;
 }
 
-async function refreshTodos() {
+async function loadTodos() {
   const data = await api("/todos");
-  const list = document.getElementById("list");
   list.innerHTML = "";
 
-  for (const t of data.todos) {
+  const todos = data.todos || [];
+  for (const todo of todos) {
     const li = document.createElement("li");
     li.className = "flex items-center gap-2";
 
-    const chk = document.createElement("input");
-    chk.type = "checkbox";
-    chk.checked = t.completed;
-    chk.className = "checkbox checkbox-sm";
-    chk.onchange = async () => {
-      try {
-        await api(`/todos/${t.id}`, { method: "PATCH", body: JSON.stringify({ completed: chk.checked }) });
-        await refreshTodos();
-      } catch (e) {
-        out(e);
-      }
-    };
+    const title = document.createElement("span");
+    title.className = "flex-1";
+    title.textContent = todo.description ? todo.title + " - " + todo.description : todo.title;
 
-    const txt = document.createElement("span");
-    txt.className = t.completed ? "line-through opacity-60" : "";
-    txt.textContent = `${t.title}${t.description ? " - " + t.description : ""}`;
+    const edit = document.createElement("button");
+    edit.className = "btn btn-xs";
+    edit.textContent = "Edit";
+    edit.onclick = async () => {
+      const newTitle = prompt("New title", todo.title);
+      if (newTitle === null) return;
 
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "btn btn-xs";
-    btnEdit.textContent = "Edit";
-    btnEdit.onclick = async () => {
-      const title = prompt("New title", t.title);
-      if (title === null) return;
-      const description = prompt("New description (blank = empty)", t.description || "");
-      if (description === null) return;
+      const newDescription = prompt("New description (blank = empty)", todo.description || "");
+      if (newDescription === null) return;
 
       try {
-        await api(`/todos/${t.id}`, {
+        await api("/todos/" + todo.id, {
           method: "PATCH",
-          body: JSON.stringify({ title, description }),
+          body: JSON.stringify({
+            title: newTitle,
+            description: newDescription === "" ? null : newDescription,
+          }),
         });
-        await refreshTodos();
+        await loadTodos();
       } catch (e) {
-        out(e);
+        outBox.textContent = JSON.stringify(e, null, 2);
       }
     };
 
-    const btnDel = document.createElement("button");
-    btnDel.className = "btn btn-xs btn-error";
-    btnDel.textContent = "Delete";
-    btnDel.onclick = async () => {
+    const del = document.createElement("button");
+    del.className = "btn btn-xs btn-error";
+    del.textContent = "Delete";
+    del.onclick = async () => {
       try {
-        await api(`/todos/${t.id}`, { method: "DELETE" });
-        await refreshTodos();
+        await api("/todos/" + todo.id, { method: "DELETE" });
+        await loadTodos();
       } catch (e) {
-        out(e);
+        outBox.textContent = JSON.stringify(e, null, 2);
       }
     };
 
-    li.appendChild(chk);
-    li.appendChild(txt);
-    li.appendChild(btnEdit);
-    li.appendChild(btnDel);
+    li.appendChild(title);
+    li.appendChild(edit);
+    li.appendChild(del);
     list.appendChild(li);
   }
 }
 
-document.getElementById("btnSignup").onclick = async () => {
-  try {
-    const data = await api("/auth/sign-up", {
-      method: "POST",
-      body: JSON.stringify({
-        firstName: document.getElementById("suFirst").value,
-        lastName: document.getElementById("suLast").value,
-        email: document.getElementById("suEmail").value,
-        password: document.getElementById("suPass").value,
-      }),
-    });
-    out(data);
-  } catch (e) {
-    out(e);
-  }
-};
-
-document.getElementById("btnSignin").onclick = async () => {
-  try {
-    const data = await api("/auth/sign-in", {
-      method: "POST",
-      body: JSON.stringify({
-        email: document.getElementById("siEmail").value,
-        password: document.getElementById("siPass").value,
-      }),
-    });
-    setToken(data.data.token);
-    out(data);
-    await refreshTodos();
-  } catch (e) {
-    out(e);
-  }
-};
-
-document.getElementById("btnMe").onclick = async () => {
-  try {
-    const data = await api("/auth/me");
-    out(data);
-  } catch (e) {
-    out(e);
-  }
-};
-
-document.getElementById("btnAdd").onclick = async () => {
-  try {
-    const data = await api("/todos", {
-      method: "POST",
-      body: JSON.stringify({
-        title: document.getElementById("todoTitle").value,
-        description: document.getElementById("todoDesc").value || undefined,
-      }),
-    });
-    out(data);
-    await refreshTodos();
-  } catch (e) {
-    out(e);
-  }
-};
-
-document.getElementById("btnRefresh").onclick = async () => {
-  try {
-    await refreshTodos();
-  } catch (e) {
-    out(e);
-  }
-};
-```
-
-### 10.5 Deep dive: `frontend/app.js` explained (very detailed)
-
-This file does 4 big jobs:
-
-1. **Authentication state**: store/read the JWT token.
-2. **API wrapper**: one function (`api`) to call the backend the same way every time.
-3. **Rendering**: take todos from the server and draw them into the page.
-4. **Event handlers**: when you click a button, call the API, then update UI.
-
-Below is a block-by-block explanation.
-
-#### A) Global token state (why we keep it here)
-
-```js
-let token = localStorage.getItem("token") || "";
-```
-
-- `localStorage.getItem("token")` returns the saved token **string**, or `null` if nothing is saved.
-- `|| ""` turns `null` into an empty string so the rest of the code can just check `if (token)`.
-
-Why do we store it in both places?
-
-- `token` (variable) = fast access while the page is open.
-- `localStorage` = survives refresh / browser restart.
-
-Important: this is fine for learning, but in real production apps, `localStorage` can be risky if you ever have an XSS bug.
-
-#### B) `out(x)` — the “debug console” on the page
-
-```js
-function out(x) {
-  const outEl = document.getElementById("out");
-  outEl.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2);
-}
-```
-
-What it does:
-
-- Finds `<pre id="out"></pre>` from your HTML.
-- Writes either:
-  - a plain string, or
-  - a formatted JSON string (pretty printed with indentation)
-
-Why `textContent` and not `innerHTML`?
-
-- `textContent` is safer: it displays text *as text*.
-- If the server sends something containing `<script>...</script>`, `textContent` will not execute it.
-
-#### C) `setToken(t)` — update memory + storage + UI
-
-```js
-function setToken(t) {
-  token = t;
-  localStorage.setItem("token", t);
-  document.getElementById("token").textContent = t ? t.slice(0, 12) + "..." : "";
-}
-```
-
-This function keeps 3 things in sync:
-
-1. `token = t` updates the in-memory variable.
-2. `localStorage.setItem("token", t)` persists it.
-3. Updates the UI badge so you can visually confirm you’re logged in.
-
-Why show only the first 12 characters?
-
-- JWT tokens are long.
-- Showing the whole thing makes the UI messy.
-- The “prefix + ...” is enough to confirm it changed.
-
-Then we call:
-
-```js
+// Default screen: Sign in
+showSignin();
 setToken(token);
-```
 
-This is important because:
+btnGoSignup.onclick = () => {
+  outBox.textContent = "";
+  showSignup();
+};
 
-- If there is already a token in `localStorage`, the badge is updated immediately on page load.
+btnGoSignin.onclick = () => {
+  outBox.textContent = "";
+  showSignin();
+};
 
-#### D) `api(path, options)` — one wrapper around `fetch()`
+btnSignin.onclick = async () => {
+  try {
+    const result = await api("/auth/sign-in", {
+      method: "POST",
+      body: JSON.stringify({ email: siEmail.value, password: siPass.value }),
+    });
 
-```js
-async function api(path, options = {}) {
-  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
-  if (token) headers.Authorization = `Bearer ${token}`;
+    setToken(result.data.token);
+    showApp();
+    await loadTodos();
+  } catch (e) {
+    outBox.textContent = JSON.stringify(e, null, 2);
+  }
+};
 
-  const res = await fetch(path, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw data;
-  return data;
-}
-```
+btnSignup.onclick = async () => {
+  const email = suEmail.value;
+  const password = suPass.value;
 
-This function standardizes how we call the backend.
+  try {
+    await api("/auth/sign-up", {
+      method: "POST",
+      body: JSON.stringify({
+        firstName: suFirst.value,
+        lastName: suLast.value,
+        email,
+        password,
+      }),
+    });
 
-1) Default headers
+    const result = await api("/auth/sign-in", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
 
-- We always send `Content-Type: application/json`.
-- If the caller passes extra headers, `...(options.headers || {})` merges them in.
+    setToken(result.data.token);
+    showApp();
+    await loadTodos();
+  } catch (e) {
+    outBox.textContent = JSON.stringify(e, null, 2);
+  }
+};
 
-2) Attach auth automatically
-
-- If `token` exists, we set:
-  - `Authorization: Bearer <token>`
-- That’s how protected routes (`/todos`, `/auth/me`) know who you are.
-
-3) Make the request
-
-- `fetch(path, { ...options, headers })` sends the request.
-- We spread `options` so the caller can set:
-  - `method` (GET/POST/PATCH/DELETE)
-  - `body` (JSON string)
-
-4) Parse response
-
-- `await res.json()` tries to parse JSON.
-- `.catch(() => ({}))` prevents the frontend from crashing if the server returns no JSON.
-  - Example: if a server crashes and returns HTML, `res.json()` would throw.
-  - We convert that into `{}` so we can still handle the error.
-
-5) Convert non-2xx responses into JS errors
-
-- `res.ok` is true for HTTP 200–299.
-- If `res.ok` is false, we `throw data;`
-
-That means every caller can do:
-
-```js
-try {
-  const data = await api("/todos");
-} catch (e) {
-  out(e);
-}
-```
-
-Instead of repeating error handling in every request.
-
-#### E) `refreshTodos()` — fetch + render
-
-```js
-async function refreshTodos() {
-  const data = await api("/todos");
-  const list = document.getElementById("list");
+btnLogout.onclick = () => {
+  setToken("");
   list.innerHTML = "";
+  outBox.textContent = "";
+  showSignin();
+};
 
-  for (const t of data.todos) {
-    // create UI elements
-  }
-}
-```
-
-The server returns something like:
-
-```json
-{ "todos": [ { "id": "...", "title": "...", "description": null, "completed": false } ] }
-```
-
-Step-by-step:
-
-1. Call `api("/todos")` (this automatically includes the Bearer token).
-2. Find the `<ul id="list"></ul>` element.
-3. `list.innerHTML = ""` clears the old list.
-4. Loop over todos and create DOM elements for each.
-
-Why clear and re-render the whole list?
-
-- It’s the easiest reliable approach for beginners.
-- After any change (edit/delete/toggle), we call `refreshTodos()` again and the UI becomes correct.
-
-#### F) Rendering one todo item (checkbox, text, edit, delete)
-
-For each todo `t`, we create:
-
-1) `li` container
-
-```js
-const li = document.createElement("li");
-li.className = "flex items-center gap-2";
-```
-
-- Creates a new list item.
-- Adds Tailwind utility classes for layout.
-
-2) Checkbox (toggle completed)
-
-```js
-const chk = document.createElement("input");
-chk.type = "checkbox";
-chk.checked = t.completed;
-chk.className = "checkbox checkbox-sm";
-chk.onchange = async () => {
+btnAdd.onclick = async () => {
   try {
-    await api(`/todos/${t.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ completed: chk.checked }),
+    await api("/todos", {
+      method: "POST",
+      body: JSON.stringify({
+        title: todoTitle.value,
+        description: todoDesc.value || undefined,
+      }),
     });
-    await refreshTodos();
+
+    todoTitle.value = "";
+    todoDesc.value = "";
+    await loadTodos();
   } catch (e) {
-    out(e);
+    outBox.textContent = JSON.stringify(e, null, 2);
   }
 };
-```
 
-- `chk.checked = t.completed` sets initial state.
-- When user toggles it, we `PATCH /todos/:id` with `{ completed: true/false }`.
-- After updating, we call `refreshTodos()` to refresh the list.
-
-Why use `chk.checked` (not `t.completed`)?
-
-- `t.completed` is the old value from the server.
-- `chk.checked` is the new value the user just chose.
-
-3) Text (title + optional description)
-
-```js
-const txt = document.createElement("span");
-txt.className = t.completed ? "line-through opacity-60" : "";
-txt.textContent = `${t.title}${t.description ? " - " + t.description : ""}`;
-```
-
-- If completed, we style it with a strike-through.
-- If `description` is empty/null, we don’t show the ` - ` part.
-
-4) Edit button
-
-```js
-btnEdit.onclick = async () => {
-  const title = prompt("New title", t.title);
-  if (title === null) return;
-  const description = prompt("New description (blank = empty)", t.description || "");
-  if (description === null) return;
-
+btnRefresh.onclick = async () => {
   try {
-    await api(`/todos/${t.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ title, description }),
-    });
-    await refreshTodos();
+    await loadTodos();
   } catch (e) {
-    out(e);
+    outBox.textContent = JSON.stringify(e, null, 2);
   }
 };
 ```
-
-Important details:
-
-- `prompt()` returns:
-  - a string if user typed something, or
-  - `null` if user clicked Cancel
-- We check for `null` to avoid sending a request when user cancels.
-
-If you want blank description to become NULL in the DB:
-
-- You can send `description: null` instead of `""`.
-- That’s why the backend update schema uses `z.string().nullable().optional()`.
-
-5) Delete button
-
-```js
-btnDel.onclick = async () => {
-  try {
-    await api(`/todos/${t.id}`, { method: "DELETE" });
-    await refreshTodos();
-  } catch (e) {
-    out(e);
-  }
-};
-```
-
-- Calls `DELETE /todos/:id`.
-- Refreshes the list after success.
-
-6) Attach everything to the list
-
-```js
-li.appendChild(chk);
-li.appendChild(txt);
-li.appendChild(btnEdit);
-li.appendChild(btnDel);
-list.appendChild(li);
-```
-
-Order matters: this controls what you see left-to-right.
-
-#### G) Button handlers (signup/signin/me/add/refresh)
-
-All button handlers follow the same pattern:
-
-1. read values from inputs
-2. call `api(...)`
-3. show output (success or error)
-4. optionally refresh todos
-
-Signup
-
-- `POST /auth/sign-up` with `{ firstName, lastName, email, password }`.
-- On success, we just display the response.
-
-Signin
-
-- `POST /auth/sign-in` with `{ email, password }`.
-- On success, response looks like `{ data: { token: "..." } }`.
-- We call `setToken(data.data.token)` so future requests include the Bearer token.
-- Then we load todos with `refreshTodos()`.
-
-Me
-
-- `GET /auth/me`.
-- Requires token.
-- Shows the current user (the backend returns `req.user`).
-
-Add todo
-
-- `POST /todos` with `{ title, description? }`.
-- Notice:
-
-```js
-description: document.getElementById("todoDesc").value || undefined
-```
-
-- If the input is empty, it becomes `undefined`.
-- `JSON.stringify(...)` omits properties whose value is `undefined`.
-- That means the backend receives either:
-  - `{ "title": "X" }` (no description field), or
-  - `{ "title": "X", "description": "Y" }`
-
-Refresh
-
-- Calls `refreshTodos()` manually.
-
-#### H) Why we wrap everything with `try/catch`
-
-Any of these can fail:
-
-- user is not logged in → server returns `401`
-- token expired → server returns `401`
-- validation fails → server returns `400`
-- email already exists → server returns `409`
-- network/DB/server error → server returns `500` or request fails
-
-Because `api()` throws for any non-2xx response, we need `try/catch` to prevent the UI from stopping.
-
-Our strategy is simple:
-
-- **Success**: show response with `out(data)`
-- **Failure**: show error payload with `out(e)`
-
-
 ---
 
 ## Section 11 — Run it

@@ -32,58 +32,68 @@
         <div class="flex-1">
           <span class="text-xl font-bold">Todo App</span>
         </div>
-        <div class="flex-none">
+        <div class="flex-none items-center gap-2">
           <span class="text-xs opacity-70 mr-2">Token</span>
           <span id="token" class="badge badge-neutral"></span>
+          <button id="btnLogout" class="btn btn-sm hidden">Logout</button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h2 class="card-title">Sign up</h2>
-            <div class="grid grid-cols-1 gap-2">
-              <input id="suFirst" class="input input-bordered" placeholder="first name" />
-              <input id="suLast" class="input input-bordered" placeholder="last name" />
-              <input id="suEmail" class="input input-bordered" placeholder="email" />
-              <input id="suPass" class="input input-bordered" placeholder="password (min 8)" type="password" />
-              <button id="btnSignup" class="btn btn-primary">Create account</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h2 class="card-title">Sign in</h2>
-            <div class="grid grid-cols-1 gap-2">
-              <input id="siEmail" class="input input-bordered" placeholder="email" />
-              <input id="siPass" class="input input-bordered" placeholder="password" type="password" />
-              <div class="flex gap-2">
-                <button id="btnSignin" class="btn btn-success">Sign in</button>
-                <button id="btnMe" class="btn">Me</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-base-100 shadow mt-4">
+      <!-- Auth: Sign in (default) -->
+      <div id="viewSignin" class="card bg-base-100 shadow mt-4">
         <div class="card-body">
-          <h2 class="card-title">Todos</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <h2 class="card-title">Sign in</h2>
+          <div class="grid grid-cols-1 gap-2 max-w-md">
+            <input id="siEmail" class="input input-bordered" placeholder="email" />
+            <input id="siPass" class="input input-bordered" placeholder="password" type="password" />
+            <div class="flex gap-2">
+              <button id="btnSignin" class="btn btn-success">Sign in</button>
+            </div>
+            <div class="text-sm opacity-80">
+              Don’t have an account?
+              <button id="btnGoSignup" class="link link-primary">Sign up</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth: Sign up -->
+      <div id="viewSignup" class="card bg-base-100 shadow mt-4 hidden">
+        <div class="card-body">
+          <h2 class="card-title">Sign up</h2>
+          <div class="grid grid-cols-1 gap-2 max-w-md">
+            <input id="suFirst" class="input input-bordered" placeholder="first name" />
+            <input id="suLast" class="input input-bordered" placeholder="last name" />
+            <input id="suEmail" class="input input-bordered" placeholder="email" />
+            <input id="suPass" class="input input-bordered" placeholder="password (min 8)" type="password" />
+            <button id="btnSignup" class="btn btn-primary">Create account</button>
+            <div class="text-sm opacity-80">
+              Already have an account?
+              <button id="btnGoSignin" class="link link-primary">Sign in</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App: Todos (only after auth) -->
+      <div id="viewApp" class="card bg-base-100 shadow mt-4 hidden">
+        <div class="card-body">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="card-title">Todos</h2>
+            <button id="btnRefresh" class="btn btn-sm">Refresh</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
             <input id="todoTitle" class="input input-bordered md:col-span-1" placeholder="title" />
             <input id="todoDesc" class="input input-bordered md:col-span-1" placeholder="description (optional)" />
-            <div class="flex gap-2 md:col-span-1">
-              <button id="btnAdd" class="btn btn-primary flex-1">Add</button>
-              <button id="btnRefresh" class="btn flex-1">Refresh</button>
-            </div>
+            <button id="btnAdd" class="btn btn-primary md:col-span-1">Add</button>
           </div>
 
           <ul id="list" class="menu bg-base-200 rounded-box mt-3"></ul>
-
-          <pre id="out" class="mt-3 p-3 bg-base-200 rounded-box overflow-auto text-xs"></pre>
         </div>
       </div>
+
+      <pre id="out" class="mt-4 p-3 bg-base-100 rounded-box shadow overflow-auto text-xs"></pre>
 
       <script src="./app.js"></script>
     </div>
