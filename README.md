@@ -256,6 +256,15 @@ Do we need `npx prisma generate`?
 - Usually **no**: `npx prisma db push` automatically runs Prisma Client generation (unless you pass `--skip-generate`).
 - You would run `npx prisma generate` manually if you changed `schema.prisma` and only want to regenerate the client (without pushing schema changes to the DB).
 
+Important sanity check (this prevents confusion later)
+
+- After `db push`, you should have a folder at `generated/prisma/`.
+- If you do **not** see `generated/prisma/`, run this once:
+
+#### PS D:\Development\PERN_stack\todo_session> `npx prisma generate`
+
+Why this matters: `npx tsc` can only compile what exists. If Prisma Client wasn’t generated, you won’t get `dist/generated/prisma/`.
+
 ### 3.2 Compile the generated client to `dist/`
 
 Why do we compile?
@@ -269,6 +278,10 @@ If you haven’t initialized TypeScript yet, do Section **1.1 Initialize TypeScr
 Now compile:
 
 #### PS D:\Development\PERN_stack\todo_session> `npx tsc`
+
+If you don’t see `dist/generated/prisma/client.js` after compiling:
+
+- Make sure you have `generated/prisma/` first (run `npx prisma generate` if needed), then re-run `npx tsc`.
 
 After this you should have:
 
