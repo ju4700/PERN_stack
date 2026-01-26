@@ -143,7 +143,6 @@ model user_add {
   users         users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model users {
   id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   email         String     @unique @db.VarChar(255)
